@@ -14,7 +14,7 @@
 4. **Habilite as APIs necessárias**, por exemplo:  
    - **Maps SDK for Android / iOS**  
    - **Geocoding API**  
-   - **Places API** (se utilizar Places)
+
 
 
 ---
