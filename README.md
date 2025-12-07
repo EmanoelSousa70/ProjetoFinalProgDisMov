@@ -1,16 +1,20 @@
 # revise_car
 
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+🔑 Configurando sua chave de API do Google Maps
+Para usar a aplicação, você precisa adicionar sua própria chave de API do Google Maps nos arquivos de configuração do projeto.
+1. Gerar sua chave
+Acesse o Console do Google Cloud
+Gere uma chave para uso com Google Maps Android SDK e/ou iOS SDK
+Libere as APIs necessárias (Maps, Geocoding etc.)
+2. Android
+Abra o arquivo:
+android/app/src/main/AndroidManifest.xml
+E substitua:
+<meta-data    android:name="com.google.android.geo.API_KEY"    android:value="SUA_KEY_API"/>
+Coloque sua chave no lugar de "SUA_KEY_API".
+3. iOS
+Abra o arquivo:
+ios/Runner/AppDelegate.swift
+E substitua:
+GMSServices.provideAPIKey("SUA_KEY_API")
+Coloque sua chave no lugar de "SUA_KEY_API".
