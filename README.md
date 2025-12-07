@@ -1,59 +1,32 @@
-🔑 Configuração da Chave de API do Google Maps
+# 🔑 **Configuração da Chave de API do Google Maps**
 
-Para que a aplicação funcione corretamente, é necessário configurar sua chave de API do Google Maps nos arquivos do projeto.
+**IMPORTANTE:** Para a aplicação funcionar corretamente, é necessário configurar a **chave de API do Google Maps** nos arquivos do projeto (Android e iOS). Siga cada etapa com atenção.
 
-🚀 Como gerar sua chave de API
+---
 
-Acesse o Google Cloud Console.
+## 📘 **1. Gerando sua Chave de API**
 
-Crie ou selecione um projeto.
-
-Gere uma chave de API compatível com:
-
-Google Maps Android SDK
-
-Google Maps iOS SDK
-
-Habilite as APIs necessárias:
-
-Maps SDK
-
-Geocoding API
-
-Places API (se usar)
-
-Outras conforme necessidade
-
-📱 Configuração no Android
-
-Abra o arquivo:
-
-android/app/src/main/AndroidManifest.xml
+1. Acesse o **Google Cloud Console**.  
+2. Crie ou selecione um **projeto**.  
+3. Gere uma **chave de API** para:  
+   - **Google Maps Android SDK**  
+   - **Google Maps iOS SDK**  
+4. **Habilite as APIs necessárias**, por exemplo:  
+   - **Maps SDK for Android / iOS**  
+   - **Geocoding API**  
+   - **Places API** (se utilizar Places)
 
 
-Localize:
+---
 
+## 🤖 **2. Configuração no Android**
+
+**📄 Arquivo a editar:**  
+`android/app/src/main/AndroidManifest.xml`
+
+**🔧 Substitua o valor da chave:**
+
+**Original:**
+```xml
 <meta-data android:name="com.google.android.geo.API_KEY"
     android:value="SUA_KEY_API"/>
-
-
-Substitua "SUA_KEY_API" pela sua chave real:
-
-<meta-data android:name="com.google.android.geo.API_KEY"
-    android:value="AQUI_SUA_CHAVE_REAL"/>
-
-🍏 Configuração no iOS
-
-Abra o arquivo:
-
-ios/Runner/AppDelegate.swift
-
-
-Localize:
-
-GMSServices.provideAPIKey("SUA_KEY_API")
-
-
-Substitua "SUA_KEY_API" pela sua chave real:
-
-GMSServices.provideAPIKey("AQUI_SUA_CHAVE_REAL")
