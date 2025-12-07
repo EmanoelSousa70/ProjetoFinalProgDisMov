@@ -37,7 +37,7 @@ class _MapPageState extends State<MapPage> {
     setState(() => _carregando = false);
   }
 
-  // Substituir _criarIconePessoa para usar assets/icons/local.ico
+ 
   Future<void> _criarIconePessoa() async {
     final icone = await BitmapDescriptor.fromAssetImage(
       const ImageConfiguration(size: Size(24, 24)),
@@ -124,7 +124,7 @@ class _MapPageState extends State<MapPage> {
   Future<void> _adicionarMarcadoresContatos() async {
     Set<Marker> marcadores = {};
     
-    // Adicionar marcador da localização do usuário com ícone de pessoa
+    
     if (_posicaoAtual != null && _mostrarLocalizacaoUsuario && _iconePessoa != null) {
       marcadores.add(
         Marker(
@@ -139,7 +139,7 @@ class _MapPageState extends State<MapPage> {
       );
     }
 
-    // Adicionar marcadores dos contatos (sempre com ícone de engrenagem)
+  
     for (var contato in _contatos) {
       try {
         List<Location> localizacoes = await locationFromAddress(contato.address);
@@ -172,7 +172,7 @@ class _MapPageState extends State<MapPage> {
     setState(() => _marcadores = marcadores);
   }
 
-  // Substituir _criarIconeChaveFenda para usar assets/icons/loja.ico
+ 
   Future<BitmapDescriptor> _criarIconeChaveFenda() async {
     return await BitmapDescriptor.fromAssetImage(
       const ImageConfiguration(size: Size(24, 24)),
@@ -366,7 +366,7 @@ class _MapPageState extends State<MapPage> {
               initialCameraPosition: CameraPosition(
                 target: _posicaoAtual != null
                     ? LatLng(_posicaoAtual!.latitude, _posicaoAtual!.longitude)
-                    : const LatLng(-23.5505, -46.6333), // São Paulo como padrão
+                    : const LatLng(-23.5505, -46.6333), 
                 zoom: 12,
               ),
               markers: _marcadores,
