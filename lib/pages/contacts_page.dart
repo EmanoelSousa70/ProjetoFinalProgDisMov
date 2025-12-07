@@ -12,64 +12,64 @@ class ContactsPage extends StatefulWidget {
 }
 
 class _ContactsPageState extends State<ContactsPage> {
-  final _dbHelper = DatabaseHelper.instance;
-  List<Contact> _contacts = [];
-  List<Contact> _filteredContacts = [];
-  bool _isLoading = true;
-  String _currentAction = 'list'; // list, add, edit, delete, search, favorites
+  final _ajudanteBanco = DatabaseHelper.instance;
+  List<Contact> _contatos = [];
+  List<Contact> _contatosFiltrados = [];
+  bool _carregando = true;
+  String _acaoAtual = 'list'; // list, add, edit, delete, search, favorites
 
   @override
   void initState() {
     super.initState();
     if (widget.arguments != null) {
-      _currentAction = widget.arguments!['action'] ?? 'list';
+      _acaoAtual = widget.arguments!['action'] ?? 'list';
     }
-    _loadContacts();
+    _carregarContatos();
   }
 
-  Future<void> _loadContacts() async {
-    setState(() => _isLoading = true);
+  Future<void> _carregarContatos() async {
+    setState(() => _carregando = true);
     
-    if (_currentAction == 'favorites') {
-      _contacts = await _dbHelper.getFavoriteContacts();
+    if (_acaoAtual == 'favorites') {
+      _contatos = await _ajudanteBanco.obterContatosFavoritos();
     } else {
-      _contacts = await _dbHelper.getAllContacts();
+      _contatos = await _ajudanteBanco.obterTodosContatos();
     }
     
-    _filteredContacts = _contacts;
-    setState(() => _isLoading = false);
+    _contatosFiltrados = _contatos;
+    setState(() => _carregando = false);
   }
 
-  void _searchContacts(String query) {
+  void _buscarContatos(String busca) {
     setState(() {
-      if (query.isEmpty) {
-        _filteredContacts = _contacts;
+      if (busca.isEmpty) {
+        _contatosFiltrados = _contatos;
       } else {
-        _filteredContacts = _contacts.where((contact) {
-          return contact.name.toLowerCase().contains(query.toLowerCase()) ||
-                 contact.phone.contains(query) ||
-                 contact.address.toLowerCase().contains(query.toLowerCase());
+        _contatosFiltrados = _contatos.where((contato) {
+          return contato.name.toLowerCase().contains(busca.toLowerCase()) ||
+                 contato.phone.contains(busca) ||
+                 contato.address.toLowerCase().contains(busca.toLowerCase());
         }).toList();
       }
     });
   }
 
-  Future<void> _showAddEditDialog({Contact? contact}) async {
-    final nameController = TextEditingController(text: contact?.name ?? '');
-    final phoneController = TextEditingController(text: contact?.phone ?? '');
-    final addressController = TextEditingController(text: contact?.address ?? '');
-    final hoursController = TextEditingController(text: contact?.workingHours ?? '');
+  Future<void> _mostrarDialogoAdicionarEditar({Contact? contato}) async {
+    final controladorNome = TextEditingController(text: contato?.name ?? '');
+    final controladorTelefone = TextEditingController(text: contato?.phone ?? '');
+    final controladorEndereco = TextEditingController(text: contato?.address ?? '');
+    final controladorHorario = TextEditingController(text: contato?.workingHours ?? '');
 
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(contact == null ? 'Cadastrar Contato' : 'Alterar Contato'),
+        title: Text(contato == null ? 'Cadastrar Contato' : 'Alterar Contato'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                controller: nameController,
+                controller: controladorNome,
                 decoration: const InputDecoration(
                   labelText: 'Nome da Loja',
                   border: OutlineInputBorder(),
@@ -77,7 +77,7 @@ class _ContactsPageState extends State<ContactsPage> {
               ),
               const SizedBox(height: 16),
               TextField(
-                controller: phoneController,
+                controller: controladorTelefone,
                 decoration: const InputDecoration(
                   labelText: 'Telefone',
                   border: OutlineInputBorder(),
@@ -86,7 +86,7 @@ class _ContactsPageState extends State<ContactsPage> {
               ),
               const SizedBox(height: 16),
               TextField(
-                controller: addressController,
+                controller: controladorEndereco,
                 decoration: const InputDecoration(
                   labelText: 'Endereço',
                   border: OutlineInputBorder(),
@@ -95,7 +95,7 @@ class _ContactsPageState extends State<ContactsPage> {
               ),
               const SizedBox(height: 16),
               TextField(
-                controller: hoursController,
+                controller: controladorHorario,
                 decoration: const InputDecoration(
                   labelText: 'Horário de Funcionamento',
                   hintText: 'Ex: Seg-Sex: 8h-18h',
@@ -112,38 +112,38 @@ class _ContactsPageState extends State<ContactsPage> {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (nameController.text.isEmpty ||
-                  phoneController.text.isEmpty ||
-                  addressController.text.isEmpty ||
-                  hoursController.text.isEmpty) {
+              if (controladorNome.text.isEmpty ||
+                  controladorTelefone.text.isEmpty ||
+                  controladorEndereco.text.isEmpty ||
+                  controladorHorario.text.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Preencha todos os campos!')),
                 );
                 return;
               }
 
-              if (contact == null) {
-                await _dbHelper.insertContact(Contact(
-                  name: nameController.text,
-                  phone: phoneController.text,
-                  address: addressController.text,
-                  workingHours: hoursController.text,
+              if (contato == null) {
+                await _ajudanteBanco.inserirContato(Contact(
+                  name: controladorNome.text,
+                  phone: controladorTelefone.text,
+                  address: controladorEndereco.text,
+                  workingHours: controladorHorario.text,
                 ));
               } else {
-                await _dbHelper.updateContact(contact.copyWith(
-                  name: nameController.text,
-                  phone: phoneController.text,
-                  address: addressController.text,
-                  workingHours: hoursController.text,
+                await _ajudanteBanco.atualizarContato(contato.copyWith(
+                  name: controladorNome.text,
+                  phone: controladorTelefone.text,
+                  address: controladorEndereco.text,
+                  workingHours: controladorHorario.text,
                 ));
               }
 
               if (mounted) {
                 Navigator.pop(context);
-                _loadContacts();
+                _carregarContatos();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(contact == null
+                    content: Text(contato == null
                         ? 'Contato cadastrado com sucesso!'
                         : 'Contato alterado com sucesso!'),
                     backgroundColor: Colors.green,
@@ -151,19 +151,19 @@ class _ContactsPageState extends State<ContactsPage> {
                 );
               }
             },
-            child: Text(contact == null ? 'Cadastrar' : 'Salvar'),
+            child: Text(contato == null ? 'Cadastrar' : 'Salvar'),
           ),
         ],
       ),
     );
   }
 
-  Future<void> _deleteContact(Contact contact) async {
-    final confirm = await showDialog<bool>(
+  Future<void> _excluirContato(Contact contato) async {
+    final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Confirmar Exclusão'),
-        content: Text('Deseja realmente excluir ${contact.name}?'),
+        content: Text('Deseja realmente excluir ${contato.name}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -178,10 +178,10 @@ class _ContactsPageState extends State<ContactsPage> {
       ),
     );
 
-    if (confirm == true && contact.id != null) {
-      await _dbHelper.deleteContact(contact.id!);
+    if (confirmar == true && contato.id != null) {
+      await _ajudanteBanco.excluirContato(contato.id!);
       if (mounted) {
-        _loadContacts();
+        _carregarContatos();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Contato excluído com sucesso!'),
@@ -192,10 +192,10 @@ class _ContactsPageState extends State<ContactsPage> {
     }
   }
 
-  Future<void> _toggleFavorite(Contact contact) async {
-    if (contact.id != null) {
-      await _dbHelper.toggleFavorite(contact.id!, !contact.isFavorite);
-      _loadContacts();
+  Future<void> _alternarFavorito(Contact contato) async {
+    if (contato.id != null) {
+      await _ajudanteBanco.alternarFavorito(contato.id!, !contato.isFavorite);
+      _carregarContatos();
     }
   }
 
@@ -203,17 +203,17 @@ class _ContactsPageState extends State<ContactsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_getTitle()),
+        title: Text(_obterTitulo()),
         backgroundColor: const Color.fromRGBO(22, 72, 107, 1),
         foregroundColor: Colors.white,
       ),
       body: Column(
         children: [
-          if (_currentAction == 'search' || _currentAction == 'list')
+          if (_acaoAtual == 'search' || _acaoAtual == 'list')
             Padding(
               padding: const EdgeInsets.all(16),
               child: TextField(
-                onChanged: _searchContacts,
+                onChanged: _buscarContatos,
                 decoration: InputDecoration(
                   labelText: 'Buscar contatos',
                   hintText: 'Digite nome, telefone ou endereço',
@@ -225,9 +225,9 @@ class _ContactsPageState extends State<ContactsPage> {
               ),
             ),
           Expanded(
-            child: _isLoading
+            child: _carregando
                 ? const Center(child: CircularProgressIndicator())
-                : _filteredContacts.isEmpty
+                : _contatosFiltrados.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -239,7 +239,7 @@ class _ContactsPageState extends State<ContactsPage> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              _getEmptyMessage(),
+                              _obterMensagemVazia(),
                               style: TextStyle(
                                 fontSize: 18,
                                 color: Colors.grey[600],
@@ -250,9 +250,9 @@ class _ContactsPageState extends State<ContactsPage> {
                       )
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
-                        itemCount: _filteredContacts.length,
-                        itemBuilder: (context, index) {
-                          final contact = _filteredContacts[index];
+                        itemCount: _contatosFiltrados.length,
+                        itemBuilder: (context, indice) {
+                          final contato = _contatosFiltrados[indice];
                           return Card(
                             margin: const EdgeInsets.only(bottom: 12),
                             elevation: 2,
@@ -260,7 +260,7 @@ class _ContactsPageState extends State<ContactsPage> {
                               leading: CircleAvatar(
                                 backgroundColor: const Color.fromRGBO(22, 72, 107, 1),
                                 child: Text(
-                                  contact.name[0].toUpperCase(),
+                                  contato.name[0].toUpperCase(),
                                   style: const TextStyle(color: Colors.white),
                                 ),
                               ),
@@ -268,13 +268,13 @@ class _ContactsPageState extends State<ContactsPage> {
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      contact.name,
+                                      contato.name,
                                       style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                   ),
-                                  if (contact.isFavorite)
+                                  if (contato.isFavorite)
                                     const Icon(
                                       Icons.star,
                                       color: Colors.amber,
@@ -290,7 +290,7 @@ class _ContactsPageState extends State<ContactsPage> {
                                     children: [
                                       const Icon(Icons.phone, size: 16),
                                       const SizedBox(width: 4),
-                                      Text(contact.phone),
+                                      Text(contato.phone),
                                     ],
                                   ),
                                   const SizedBox(height: 4),
@@ -298,7 +298,7 @@ class _ContactsPageState extends State<ContactsPage> {
                                     children: [
                                       const Icon(Icons.location_on, size: 16),
                                       const SizedBox(width: 4),
-                                      Expanded(child: Text(contact.address)),
+                                      Expanded(child: Text(contato.address)),
                                     ],
                                   ),
                                   const SizedBox(height: 4),
@@ -306,7 +306,7 @@ class _ContactsPageState extends State<ContactsPage> {
                                     children: [
                                       const Icon(Icons.access_time, size: 16),
                                       const SizedBox(width: 4),
-                                      Text(contact.workingHours),
+                                      Text(contato.workingHours),
                                     ],
                                   ),
                                 ],
@@ -323,27 +323,27 @@ class _ContactsPageState extends State<ContactsPage> {
                                     ),
                                     onTap: () => Future.delayed(
                                       const Duration(milliseconds: 100),
-                                      () => _showAddEditDialog(contact: contact),
+                                      () => _mostrarDialogoAdicionarEditar(contato: contato),
                                     ),
                                   ),
                                   PopupMenuItem(
                                     child: Row(
                                       children: [
                                         Icon(
-                                          contact.isFavorite
+                                          contato.isFavorite
                                               ? Icons.star
                                               : Icons.star_border,
                                           size: 20,
                                         ),
                                         const SizedBox(width: 8),
-                                        Text(contact.isFavorite
+                                        Text(contato.isFavorite
                                             ? 'Remover dos Favoritos'
                                             : 'Adicionar aos Favoritos'),
                                       ],
                                     ),
                                     onTap: () => Future.delayed(
                                       const Duration(milliseconds: 100),
-                                      () => _toggleFavorite(contact),
+                                      () => _alternarFavorito(contato),
                                     ),
                                   ),
                                   PopupMenuItem(
@@ -356,7 +356,7 @@ class _ContactsPageState extends State<ContactsPage> {
                                     ),
                                     onTap: () => Future.delayed(
                                       const Duration(milliseconds: 100),
-                                      () => _deleteContact(contact),
+                                      () => _excluirContato(contato),
                                     ),
                                   ),
                                 ],
@@ -368,9 +368,9 @@ class _ContactsPageState extends State<ContactsPage> {
           ),
         ],
       ),
-      floatingActionButton: _currentAction == 'add' || _currentAction == 'list'
+      floatingActionButton: _acaoAtual == 'add' || _acaoAtual == 'list'
           ? FloatingActionButton(
-              onPressed: () => _showAddEditDialog(),
+              onPressed: () => _mostrarDialogoAdicionarEditar(),
               backgroundColor: const Color.fromRGBO(22, 72, 107, 1),
               child: const Icon(Icons.add, color: Colors.white),
             )
@@ -378,8 +378,8 @@ class _ContactsPageState extends State<ContactsPage> {
     );
   }
 
-  String _getTitle() {
-    switch (_currentAction) {
+  String _obterTitulo() {
+    switch (_acaoAtual) {
       case 'add':
         return 'Cadastrar Contato';
       case 'edit':
@@ -395,8 +395,8 @@ class _ContactsPageState extends State<ContactsPage> {
     }
   }
 
-  String _getEmptyMessage() {
-    switch (_currentAction) {
+  String _obterMensagemVazia() {
+    switch (_acaoAtual) {
       case 'search':
         return 'Nenhum contato encontrado';
       case 'favorites':

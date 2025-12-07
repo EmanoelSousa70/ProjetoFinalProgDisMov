@@ -1,6 +1,4 @@
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -16,84 +14,43 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
-  GoogleMapController? _mapController;
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  GoogleMapController? _controladorMapa;
+  final DatabaseHelper _ajudanteBanco = DatabaseHelper.instance;
   
-  Position? _currentPosition;
-  Set<Marker> _markers = {};
-  List<Contact> _contacts = [];
-  bool _isLoading = true;
-  bool _showUserLocation = true;
-  BitmapDescriptor? _personIcon; // Ícone de pessoa para localização do usuário
+  Position? _posicaoAtual;
+  Set<Marker> _marcadores = {};
+  List<Contact> _contatos = [];
+  bool _carregando = true;
+  bool _mostrarLocalizacaoUsuario = true;
+  BitmapDescriptor? _iconePessoa; // Ícone de pessoa para localização do usuário
 
   @override
   void initState() {
     super.initState();
-    _initializeMap();
+    _inicializarMapa();
   }
 
-  Future<void> _initializeMap() async {
-    await _createPersonIcon(); // Criar ícone de pessoa primeiro
-    await _getCurrentLocation();
-    await _loadContacts();
-    setState(() => _isLoading = false);
+  Future<void> _inicializarMapa() async {
+    await _criarIconePessoa(); // Criar ícone de pessoa primeiro
+    await _obterLocalizacaoAtual();
+    await _carregarContatos();
+    setState(() => _carregando = false);
   }
 
-  // Criar ícone customizado de pessoa para a localização do usuário
-  Future<void> _createPersonIcon() async {
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
-    final size = 120.0;
-    final centerX = size / 2;
-    
-    // Fundo branco para melhor visibilidade
-    final backgroundPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(centerX, size / 2), size / 2, backgroundPaint);
-    
-    // Borda azul
-    final borderPaint = Paint()
-      ..color = Colors.blue
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
-    canvas.drawCircle(Offset(centerX, size / 2), size / 2 - 2, borderPaint);
-    
-    // Desenhar cabeça (círculo)
-    final headPaint = Paint()
-      ..color = Colors.blue
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(
-      Offset(centerX, size / 2 - 25),
-      18,
-      headPaint,
+  // Substituir _criarIconePessoa para usar assets/icons/local.ico
+  Future<void> _criarIconePessoa() async {
+    final icone = await BitmapDescriptor.fromAssetImage(
+      const ImageConfiguration(size: Size(24, 24)),
+      'assets/icons/local.png',
     );
-    
-    // Desenhar corpo (formato de pessoa - triângulo/trapezóide)
-    final bodyPaint = Paint()
-      ..color = Colors.blue
-      ..style = PaintingStyle.fill;
-    
-    // Corpo em formato de losango/trapézio
-    final bodyPath = Path();
-    bodyPath.moveTo(centerX, size / 2 - 5); // Topo do corpo
-    bodyPath.lineTo(centerX - 25, size / 2 + 30); // Esquerda
-    bodyPath.lineTo(centerX + 25, size / 2 + 30); // Direita
-    bodyPath.close();
-    canvas.drawPath(bodyPath, bodyPaint);
-    
-    // Converter para imagem
-    final picture = recorder.endRecording();
-    final image = await picture.toImage(size.toInt(), size.toInt());
-    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    final uint8List = byteData!.buffer.asUint8List();
-    
-    _personIcon = BitmapDescriptor.fromBytes(uint8List);
+    setState(() {
+      _iconePessoa = icone;
+    });
   }
 
-  Future<void> _getCurrentLocation() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
+  Future<void> _obterLocalizacaoAtual() async {
+    bool servicoHabilitado = await Geolocator.isLocationServiceEnabled();
+    if (!servicoHabilitado) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -105,10 +62,10 @@ class _MapPageState extends State<MapPage> {
       return;
     }
 
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
+    LocationPermission permissao = await Geolocator.checkPermission();
+    if (permissao == LocationPermission.denied) {
+      permissao = await Geolocator.requestPermission();
+      if (permissao == LocationPermission.denied) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -121,7 +78,7 @@ class _MapPageState extends State<MapPage> {
       }
     }
 
-    if (permission == LocationPermission.deniedForever) {
+    if (permissao == LocationPermission.deniedForever) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -134,23 +91,23 @@ class _MapPageState extends State<MapPage> {
     }
 
     try {
-      Position position = await Geolocator.getCurrentPosition(
+      Position posicao = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
-      setState(() => _currentPosition = position);
+      setState(() => _posicaoAtual = posicao);
       
-      if (_mapController != null && _showUserLocation) {
-        _mapController!.animateCamera(
+      if (_controladorMapa != null && _mostrarLocalizacaoUsuario) {
+        _controladorMapa!.animateCamera(
           CameraUpdate.newLatLng(
-            LatLng(position.latitude, position.longitude),
+            LatLng(posicao.latitude, posicao.longitude),
           ),
         );
       }
-    } catch (e) {
+    } catch (erro) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erro ao obter localização: $e'),
+            content: Text('Erro ao obter localização: $erro'),
             backgroundColor: Colors.red,
           ),
         );
@@ -158,22 +115,22 @@ class _MapPageState extends State<MapPage> {
     }
   }
 
-  Future<void> _loadContacts() async {
-    final contacts = await _dbHelper.getAllContacts();
-    setState(() => _contacts = contacts);
-    await _addContactMarkers();
+  Future<void> _carregarContatos() async {
+    final contatos = await _ajudanteBanco.obterTodosContatos();
+    setState(() => _contatos = contatos);
+    await _adicionarMarcadoresContatos();
   }
 
-  Future<void> _addContactMarkers() async {
-    Set<Marker> markers = {};
+  Future<void> _adicionarMarcadoresContatos() async {
+    Set<Marker> marcadores = {};
     
     // Adicionar marcador da localização do usuário com ícone de pessoa
-    if (_currentPosition != null && _showUserLocation && _personIcon != null) {
-      markers.add(
+    if (_posicaoAtual != null && _mostrarLocalizacaoUsuario && _iconePessoa != null) {
+      marcadores.add(
         Marker(
-          markerId: const MarkerId('user_location'),
-          position: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-          icon: _personIcon!,
+          markerId: const MarkerId('localizacao_usuario'),
+          position: LatLng(_posicaoAtual!.latitude, _posicaoAtual!.longitude),
+          icon: _iconePessoa!,
           infoWindow: const InfoWindow(
             title: 'Sua Localização',
             snippet: 'Você está aqui',
@@ -183,148 +140,47 @@ class _MapPageState extends State<MapPage> {
     }
 
     // Adicionar marcadores dos contatos (sempre com ícone de engrenagem)
-    for (var contact in _contacts) {
+    for (var contato in _contatos) {
       try {
-        List<Location> locations = await locationFromAddress(contact.address);
-        if (locations.isNotEmpty) {
-          final location = locations.first;
-          final position = LatLng(location.latitude, location.longitude);
+        List<Location> localizacoes = await locationFromAddress(contato.address);
+        if (localizacoes.isNotEmpty) {
+          final localizacao = localizacoes.first;
+          final posicao = LatLng(localizacao.latitude, localizacao.longitude);
           
           // Sempre usar ícone de chave de fenda para as lojas
-          final icon = await _createWrenchIcon();
+          final icone = await _criarIconeChaveFenda();
           
-          markers.add(
+          marcadores.add(
             Marker(
-              markerId: MarkerId('contact_${contact.id}'),
-              position: position,
-              icon: icon,
+              markerId: MarkerId('contato_${contato.id}'),
+              position: posicao,
+              icon: icone,
               infoWindow: InfoWindow(
-                title: contact.name,
+                title: contato.name,
                 snippet: 'Toque para ver detalhes',
               ),
-              onTap: () => _showContactDetails(contact, position),
+              onTap: () => _mostrarDetalhesContato(contato, posicao),
             ),
           );
         }
-      } catch (e) {
+      } catch (erro) {
         // Se não conseguir geocodificar o endereço, não adiciona o marcador
-        debugPrint('Erro ao geocodificar endereço de ${contact.name}: $e');
+        debugPrint('Erro ao geocodificar endereço de ${contato.name}: $erro');
       }
     }
 
-    setState(() => _markers = markers);
+    setState(() => _marcadores = marcadores);
   }
 
-  // Criar ícone customizado de chave de fenda para as lojas
-  Future<BitmapDescriptor> _createWrenchIcon() async {
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
-    final size = 120.0;
-    final centerX = size / 2;
-    final centerY = size / 2;
-    
-    // Fundo branco para melhor visibilidade
-    final backgroundPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(centerX, centerY), size / 2, backgroundPaint);
-    
-    // Borda laranja
-    final borderPaint = Paint()
-      ..color = Colors.orange
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
-    canvas.drawCircle(Offset(centerX, centerY), size / 2 - 2, borderPaint);
-    
-    // Cor da chave de fenda
-    final wrenchPaint = Paint()
-      ..color = Colors.orange
-      ..style = PaintingStyle.fill;
-    
-    final strokePaint = Paint()
-      ..color = Colors.orange.shade700
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    
-    // Desenhar chave de fenda (vertical, de cima para baixo)
-    // Cabeça da chave (parte superior - formato de U aberto)
-    final headWidth = 30.0;
-    final headHeight = 22.0;
-    final headTop = centerY - 30;
-    
-    // Cabeça em formato de U (aberta embaixo)
-    final headPath = Path();
-    // Lado esquerdo
-    headPath.moveTo(centerX - headWidth / 2, headTop);
-    headPath.lineTo(centerX - headWidth / 2, headTop + headHeight - 6);
-    // Curva inferior
-    headPath.quadraticBezierTo(
-      centerX - headWidth / 2,
-      headTop + headHeight,
-      centerX,
-      headTop + headHeight,
+  // Substituir _criarIconeChaveFenda para usar assets/icons/loja.ico
+  Future<BitmapDescriptor> _criarIconeChaveFenda() async {
+    return await BitmapDescriptor.fromAssetImage(
+      const ImageConfiguration(size: Size(24, 24)),
+      'assets/icons/loja.png',
     );
-    headPath.quadraticBezierTo(
-      centerX + headWidth / 2,
-      headTop + headHeight,
-      centerX + headWidth / 2,
-      headTop + headHeight - 6,
-    );
-    // Lado direito
-    headPath.lineTo(centerX + headWidth / 2, headTop);
-    headPath.close();
-    canvas.drawPath(headPath, wrenchPaint);
-    canvas.drawPath(headPath, strokePaint);
-    
-    // Braço/cabo da chave (parte do meio - retângulo vertical)
-    final armWidth = 14.0;
-    final armHeight = 32.0;
-    final armTop = headTop + headHeight;
-    final armRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(
-        centerX - armWidth / 2,
-        armTop,
-        armWidth,
-        armHeight,
-      ),
-      const Radius.circular(3),
-    );
-    canvas.drawRRect(armRect, wrenchPaint);
-    canvas.drawRRect(armRect, strokePaint);
-    
-    // Ponta da chave (parte inferior - formato de L virado)
-    final tipWidth = 20.0;
-    final tipHeight = 18.0;
-    final tipTop = armTop + armHeight;
-    
-    // Desenhar ponta em formato de L (gancho)
-    final tipPath = Path();
-    // Parte vertical esquerda
-    tipPath.moveTo(centerX - tipWidth / 2, tipTop);
-    tipPath.lineTo(centerX - tipWidth / 2, tipTop + tipHeight);
-    // Parte horizontal inferior
-    tipPath.lineTo(centerX + tipWidth / 2, tipTop + tipHeight);
-    // Parte vertical direita (mais curta)
-    tipPath.lineTo(centerX + tipWidth / 2, tipTop + tipHeight - 10);
-    // Parte horizontal superior
-    tipPath.lineTo(centerX - tipWidth / 2 + 8, tipTop + tipHeight - 10);
-    tipPath.lineTo(centerX - tipWidth / 2 + 8, tipTop);
-    tipPath.close();
-    canvas.drawPath(tipPath, wrenchPaint);
-    canvas.drawPath(tipPath, strokePaint);
-    
-    // Converter para imagem
-    final picture = recorder.endRecording();
-    final image = await picture.toImage(size.toInt(), size.toInt());
-    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    final uint8List = byteData!.buffer.asUint8List();
-    
-    return BitmapDescriptor.fromBytes(uint8List);
   }
 
-  void _showContactDetails(Contact contact, LatLng position) {
+  void _mostrarDetalhesContato(Contact contato, LatLng posicao) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -343,7 +199,7 @@ class _MapPageState extends State<MapPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  contact.name,
+                  contato.name,
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -357,17 +213,17 @@ class _MapPageState extends State<MapPage> {
               ],
             ),
             const SizedBox(height: 16),
-            _buildDetailRow(Icons.phone, 'Telefone', contact.phone),
+            _construirLinhaDetalhe(Icons.phone, 'Telefone', contato.phone),
             const SizedBox(height: 12),
-            _buildDetailRow(Icons.location_on, 'Endereço', contact.address),
+            _construirLinhaDetalhe(Icons.location_on, 'Endereço', contato.address),
             const SizedBox(height: 12),
-            _buildDetailRow(Icons.access_time, 'Horário de Funcionamento', contact.workingHours),
+            _construirLinhaDetalhe(Icons.access_time, 'Horário de Funcionamento', contato.workingHours),
             const SizedBox(height: 24),
             Row(
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () => _openRoute(contact.address, position),
+                    onPressed: () => _abrirRota(contato.address, posicao),
                     icon: const Icon(Icons.directions),
                     label: const Text('Traçar Rota'),
                     style: ElevatedButton.styleFrom(
@@ -380,7 +236,7 @@ class _MapPageState extends State<MapPage> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () => _callContact(contact.phone),
+                    onPressed: () => _ligarContato(contato.phone),
                     icon: const Icon(Icons.call),
                     label: const Text('Ligar'),
                     style: ElevatedButton.styleFrom(
@@ -398,18 +254,18 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String value) {
+  Widget _construirLinhaDetalhe(IconData icone, String rotulo, String valor) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: const Color.fromRGBO(22, 72, 107, 1)),
+        Icon(icone, size: 20, color: const Color.fromRGBO(22, 72, 107, 1)),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                label,
+                rotulo,
                 style: const TextStyle(
                   fontSize: 12,
                   color: Colors.grey,
@@ -418,7 +274,7 @@ class _MapPageState extends State<MapPage> {
               ),
               const SizedBox(height: 4),
               Text(
-                value,
+                valor,
                 style: const TextStyle(
                   fontSize: 16,
                   color: Colors.black87,
@@ -431,12 +287,12 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
-  Future<void> _openRoute(String address, LatLng destination) async {
+  Future<void> _abrirRota(String endereco, LatLng destino) async {
     String url = '';
-    if (_currentPosition != null) {
-      url = 'https://www.google.com/maps/dir/?api=1&origin=${_currentPosition!.latitude},${_currentPosition!.longitude}&destination=${destination.latitude},${destination.longitude}&travelmode=driving';
+    if (_posicaoAtual != null) {
+      url = 'https://www.google.com/maps/dir/?api=1&origin=${_posicaoAtual!.latitude},${_posicaoAtual!.longitude}&destination=${destino.latitude},${destino.longitude}&travelmode=driving';
     } else {
-      url = 'https://www.google.com/maps/search/?api=1&query=${destination.latitude},${destination.longitude}';
+      url = 'https://www.google.com/maps/search/?api=1&query=${destino.latitude},${destino.longitude}';
     }
     
     final uri = Uri.parse(url);
@@ -454,8 +310,8 @@ class _MapPageState extends State<MapPage> {
     }
   }
 
-  Future<void> _callContact(String phone) async {
-    final uri = Uri.parse('tel:$phone');
+  Future<void> _ligarContato(String telefone) async {
+    final uri = Uri.parse('tel:$telefone');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     } else {
@@ -470,13 +326,13 @@ class _MapPageState extends State<MapPage> {
     }
   }
 
-  void _toggleUserLocation() {
-    setState(() => _showUserLocation = !_showUserLocation);
-    _addContactMarkers();
-    if (_showUserLocation && _currentPosition != null && _mapController != null) {
-      _mapController!.animateCamera(
+  void _alternarLocalizacaoUsuario() {
+    setState(() => _mostrarLocalizacaoUsuario = !_mostrarLocalizacaoUsuario);
+    _adicionarMarcadoresContatos();
+    if (_mostrarLocalizacaoUsuario && _posicaoAtual != null && _controladorMapa != null) {
+      _controladorMapa!.animateCamera(
         CameraUpdate.newLatLng(
-          LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+          LatLng(_posicaoAtual!.latitude, _posicaoAtual!.longitude),
         ),
       );
     }
@@ -498,35 +354,35 @@ class _MapPageState extends State<MapPage> {
         actions: [
           // Botão para mostrar/ocultar localização
           IconButton(
-            icon: Icon(_showUserLocation ? Icons.my_location : Icons.location_off),
-            tooltip: _showUserLocation ? 'Ocultar Localização' : 'Mostrar Localização',
-            onPressed: _toggleUserLocation,
+            icon: Icon(_mostrarLocalizacaoUsuario ? Icons.my_location : Icons.location_off),
+            tooltip: _mostrarLocalizacaoUsuario ? 'Ocultar Localização' : 'Mostrar Localização',
+            onPressed: _alternarLocalizacaoUsuario,
           ),
         ],
       ),
-      body: _isLoading
+      body: _carregando
           ? const Center(child: CircularProgressIndicator())
           : GoogleMap(
               initialCameraPosition: CameraPosition(
-                target: _currentPosition != null
-                    ? LatLng(_currentPosition!.latitude, _currentPosition!.longitude)
+                target: _posicaoAtual != null
+                    ? LatLng(_posicaoAtual!.latitude, _posicaoAtual!.longitude)
                     : const LatLng(-23.5505, -46.6333), // São Paulo como padrão
                 zoom: 12,
               ),
-              markers: _markers,
-              myLocationEnabled: _showUserLocation,
+              markers: _marcadores,
+              myLocationEnabled: _mostrarLocalizacaoUsuario,
               myLocationButtonEnabled: false,
               mapType: MapType.normal,
-              onMapCreated: (GoogleMapController controller) {
-                _mapController = controller;
+              onMapCreated: (GoogleMapController controlador) {
+                _controladorMapa = controlador;
               },
             ),
-      floatingActionButton: _showUserLocation && _currentPosition != null
+      floatingActionButton: _mostrarLocalizacaoUsuario && _posicaoAtual != null
           ? FloatingActionButton(
               onPressed: () {
-                _mapController?.animateCamera(
+                _controladorMapa?.animateCamera(
                   CameraUpdate.newLatLng(
-                    LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+                    LatLng(_posicaoAtual!.latitude, _posicaoAtual!.longitude),
                   ),
                 );
               },
@@ -539,7 +395,7 @@ class _MapPageState extends State<MapPage> {
 
   @override
   void dispose() {
-    _mapController?.dispose();
+    _controladorMapa?.dispose();
     super.dispose();
   }
 }

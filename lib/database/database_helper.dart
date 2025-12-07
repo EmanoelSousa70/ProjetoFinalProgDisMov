@@ -2,6 +2,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/user.dart';
 import '../models/contact.dart';
+import '../models/manutencao.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -15,20 +16,20 @@ class DatabaseHelper {
     return _database!;
   }
 
-  Future<Database> _initDB(String filePath) async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, filePath);
+  Future<Database> _initDB(String caminhoArquivo) async {
+    final caminhoBanco = await getDatabasesPath();
+    final caminho = join(caminhoBanco, caminhoArquivo);
 
     return await openDatabase(
-      path,
+      caminho,
       version: 1,
       onCreate: _createDB,
     );
   }
 
-  Future<void> _createDB(Database db, int version) async {
+  Future<void> _createDB(Database banco, int versao) async {
     // Tabela de usuários
-    await db.execute('''
+    await banco.execute('''
       CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
@@ -38,7 +39,7 @@ class DatabaseHelper {
     ''');
 
     // Tabela de contatos
-    await db.execute('''
+    await banco.execute('''
       CREATE TABLE contacts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
@@ -48,117 +49,139 @@ class DatabaseHelper {
         isFavorite INTEGER NOT NULL DEFAULT 0
       )
     ''');
+
+    await banco.execute('''
+      CREATE TABLE manutencoes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        data TEXT NOT NULL,
+        local TEXT NOT NULL,
+        descricao TEXT NOT NULL,
+        valor REAL NOT NULL
+      )
+    ''');
   }
 
   // ========== OPERAÇÕES DE USUÁRIO ==========
-  Future<int> insertUser(User user) async {
-    final db = await database;
-    return await db.insert('users', user.toMap());
+  Future<int> inserirUsuario(User usuario) async {
+    final banco = await database;
+    return await banco.insert('users', usuario.toMap());
   }
 
-  Future<User?> getUserByEmail(String email) async {
-    final db = await database;
-    final maps = await db.query(
+  Future<User?> obterUsuarioPorEmail(String email) async {
+    final banco = await database;
+    final resultados = await banco.query(
       'users',
       where: 'email = ?',
       whereArgs: [email],
     );
 
-    if (maps.isNotEmpty) {
-      return User.fromMap(maps.first);
+    if (resultados.isNotEmpty) {
+      return User.fromMap(resultados.first);
     }
     return null;
   }
 
-  Future<User?> loginUser(String email, String password) async {
-    final db = await database;
-    final maps = await db.query(
+  Future<User?> fazerLogin(String email, String senha) async {
+    final banco = await database;
+    final resultados = await banco.query(
       'users',
       where: 'email = ? AND password = ?',
-      whereArgs: [email, password],
+      whereArgs: [email, senha],
     );
 
-    if (maps.isNotEmpty) {
-      return User.fromMap(maps.first);
+    if (resultados.isNotEmpty) {
+      return User.fromMap(resultados.first);
     }
     return null;
   }
 
   // ========== OPERAÇÕES DE CONTATO ==========
-  Future<int> insertContact(Contact contact) async {
-    final db = await database;
-    return await db.insert('contacts', contact.toMap());
+  Future<int> inserirContato(Contact contato) async {
+    final banco = await database;
+    return await banco.insert('contacts', contato.toMap());
   }
 
-  Future<List<Contact>> getAllContacts() async {
-    final db = await database;
-    final maps = await db.query('contacts', orderBy: 'name');
-    return maps.map((map) => Contact.fromMap(map)).toList();
+  Future<List<Contact>> obterTodosContatos() async {
+    final banco = await database;
+    final resultados = await banco.query('contacts', orderBy: 'name');
+    return resultados.map((resultado) => Contact.fromMap(resultado)).toList();
   }
 
-  Future<List<Contact>> searchContacts(String query) async {
-    final db = await database;
-    final maps = await db.query(
+  Future<List<Contact>> buscarContatos(String busca) async {
+    final banco = await database;
+    final resultados = await banco.query(
       'contacts',
       where: 'name LIKE ? OR phone LIKE ? OR address LIKE ?',
-      whereArgs: ['%$query%', '%$query%', '%$query%'],
+      whereArgs: ['%$busca%', '%$busca%', '%$busca%'],
       orderBy: 'name',
     );
-    return maps.map((map) => Contact.fromMap(map)).toList();
+    return resultados.map((resultado) => Contact.fromMap(resultado)).toList();
   }
 
-  Future<List<Contact>> getFavoriteContacts() async {
-    final db = await database;
-    final maps = await db.query(
+  Future<List<Contact>> obterContatosFavoritos() async {
+    final banco = await database;
+    final resultados = await banco.query(
       'contacts',
       where: 'isFavorite = ?',
       whereArgs: [1],
       orderBy: 'name',
     );
-    return maps.map((map) => Contact.fromMap(map)).toList();
+    return resultados.map((resultado) => Contact.fromMap(resultado)).toList();
   }
 
-  Future<Contact?> getContactById(int id) async {
-    final db = await database;
-    final maps = await db.query(
+  Future<Contact?> obterContatoPorId(int id) async {
+    final banco = await database;
+    final resultados = await banco.query(
       'contacts',
       where: 'id = ?',
       whereArgs: [id],
     );
 
-    if (maps.isNotEmpty) {
-      return Contact.fromMap(maps.first);
+    if (resultados.isNotEmpty) {
+      return Contact.fromMap(resultados.first);
     }
     return null;
   }
 
-  Future<int> updateContact(Contact contact) async {
-    final db = await database;
-    return await db.update(
+  Future<int> atualizarContato(Contact contato) async {
+    final banco = await database;
+    return await banco.update(
       'contacts',
-      contact.toMap(),
+      contato.toMap(),
       where: 'id = ?',
-      whereArgs: [contact.id],
+      whereArgs: [contato.id],
     );
   }
 
-  Future<int> deleteContact(int id) async {
-    final db = await database;
-    return await db.delete(
+  Future<int> excluirContato(int id) async {
+    final banco = await database;
+    return await banco.delete(
       'contacts',
       where: 'id = ?',
       whereArgs: [id],
     );
   }
 
-  Future<int> toggleFavorite(int id, bool isFavorite) async {
-    final db = await database;
-    return await db.update(
+  Future<int> alternarFavorito(int id, bool ehFavorito) async {
+    final banco = await database;
+    return await banco.update(
       'contacts',
-      {'isFavorite': isFavorite ? 1 : 0},
+      {'isFavorite': ehFavorito ? 1 : 0},
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  // ========== OPERAÇÕES DE MANUTENÇÃO ==========
+  Future<int> inserirManutencao(Manutencao manutencao) async {
+    final banco = await database;
+    return await banco.insert('manutencoes', manutencao.toMap());
+  }
+  
+  Future<List<Manutencao>> obterTodasManutencoes() async {
+    final banco = await database;
+    final resultados = await banco.query('manutencoes', orderBy: 'data DESC');
+    return resultados.map((resultado) => Manutencao.fromMap(resultado)).toList();
   }
 
   Future<void> close() async {
