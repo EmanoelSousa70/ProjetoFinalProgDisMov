@@ -49,14 +49,3 @@ As imagens abaixo são carregadas diretamente da pasta
 
 ![04](https://raw.githubusercontent.com/EmanoelSousa70/ProjetoFinalProgDisMov/main/assets/screenshots/04.jpeg)
 
-![05](https://raw.githubusercontent.com/EmanoelSousa70/ProjetoFinalProgDisMov/main/assets/screenshots/05.jpeg)
-
-![06](https://raw.githubusercontent.com/EmanoelSousa70/ProjetoFinalProgDisMov/main/assets/screenshots/06.jpeg)
-
-![07](https://raw.githubusercontent.com/EmanoelSousa70/ProjetoFinalProgDisMov/main/assets/screenshots/07.jpeg)
-
-![08](https://raw.githubusercontent.com/EmanoelSousa70/ProjetoFinalProgDisMov/main/assets/screenshots/08.jpeg)
-
-![09](https://raw.githubusercontent.com/EmanoelSousa70/ProjetoFinalProgDisMov/main/assets/screenshots/09.jpeg)
-
-![10](https://raw.githubusercontent.com/EmanoelSousa70/ProjetoFinalProgDisMov/main/assets/screenshots/10.jpeg)
