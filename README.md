@@ -30,3 +30,33 @@
 ```xml
 <meta-data android:name="com.google.android.geo.API_KEY"
     android:value="SUA_KEY_API"/>
+
+## 🖼️ Screenshots da Aplicação
+
+As imagens abaixo são carregadas diretamente da pasta  
+`assets/screenshots/` do repositório.
+```
+
+### 📱 Telas
+
+![00](https://raw.githubusercontent.com/EmanoelSousa70/ProjetoFinalProgDisMov/main/assets/screenshots/00.jpeg)
+
+![01](https://raw.githubusercontent.com/EmanoelSousa70/ProjetoFinalProgDisMov/main/assets/screenshots/01.jpeg)
+
+![02](https://raw.githubusercontent.com/EmanoelSousa70/ProjetoFinalProgDisMov/main/assets/screenshots/02.jpeg)
+
+![03](https://raw.githubusercontent.com/EmanoelSousa70/ProjetoFinalProgDisMov/main/assets/screenshots/03.jpeg)
+
+![04](https://raw.githubusercontent.com/EmanoelSousa70/ProjetoFinalProgDisMov/main/assets/screenshots/04.jpeg)
+
+![05](https://raw.githubusercontent.com/EmanoelSousa70/ProjetoFinalProgDisMov/main/assets/screenshots/05.jpeg)
+
+![06](https://raw.githubusercontent.com/EmanoelSousa70/ProjetoFinalProgDisMov/main/assets/screenshots/06.jpeg)
+
+![07](https://raw.githubusercontent.com/EmanoelSousa70/ProjetoFinalProgDisMov/main/assets/screenshots/07.jpeg)
+
+![08](https://raw.githubusercontent.com/EmanoelSousa70/ProjetoFinalProgDisMov/main/assets/screenshots/08.jpeg)
+
+![09](https://raw.githubusercontent.com/EmanoelSousa70/ProjetoFinalProgDisMov/main/assets/screenshots/09.jpeg)
+
+![10](https://raw.githubusercontent.com/EmanoelSousa70/ProjetoFinalProgDisMov/main/assets/screenshots/10.jpeg)
